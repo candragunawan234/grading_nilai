@@ -52,7 +52,7 @@ def generate_pdf(dataframe):
     return pdf.output()
 
 # --- SIDEBAR: DOWNLOAD TEMPLATE ---
-st.sidebar.header("Langkah 1: Persiapan")
+st.sidebar.header("Template Nilai Siswa")
 example_data = pd.DataFrame({
     "Nama Siswa": ["Budi", "Siti", "Joko"],
     "Nilai": [85, 92, 70]
@@ -69,7 +69,7 @@ st.sidebar.download_button(
 )
 
 # --- MAIN: UPLOAD ---
-st.header("Langkah 2: Upload Data")
+st.header("Upload Data")
 uploaded_file = st.file_uploader("Pilih file CSV hasil edit kamu", type=["csv"])
 
 if uploaded_file is not None:
