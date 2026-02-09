@@ -49,7 +49,11 @@ def generate_pdf(dataframe):
         pdf.cell(30, 10, str(row['Grade']), 1)
         pdf.cell(40, 10, str(row['Status']), 1)
         pdf.ln()
-    return pdf.output()
+    
+    pdf_output = pdf.output()
+    if isinstance(pdf_output, str):
+        pdf_output = pdf_output.encode('latin-1')
+    return pdf_output
 
 #SIDEBAR: DOWNLOAD TEMPLATE
 st.sidebar.header("Template Nilai Siswa")
@@ -77,8 +81,12 @@ if uploaded_file is not None:
        
         df = pd.read_csv(uploaded_file, sep=';', encoding='utf-8-sig')
         
+        # Normalize kolom Nama - jika ada "Nama" tapi tidak ada "Nama Siswa", rename
+        if "Nama" in df.columns and "Nama Siswa" not in df.columns:
+            df.rename(columns={"Nama": "Nama Siswa"}, inplace=True)
+        
         # Cek apakah kolom Nilai ada 
-        if "Nilai" in df.columns:
+        if "Nilai" in df.columns and "Nama Siswa" in df.columns:
             #PROSES DATA
             df = df.drop_duplicates() # Hapus data ganda
             
@@ -109,19 +117,43 @@ if uploaded_file is not None:
                 return f'background-color: {color}; color: white; font-weight: bold'
 
             # Terapkan warna
-            styled_df = df.style.applymap(style_status, subset=['Status'])
+            styled_df = df.style.map(style_status, subset=['Status'])
             st.dataframe(styled_df, use_container_width=True)
             
             #TOMBOL DOWNLOAD HASIL
             hasil_csv = df.to_csv(index=False, sep=';', encoding='utf-8-sig').encode('utf-8-sig')
-            st.download_button(
-                label="💾 Download Hasil Jadi (CSV)",
-                data=hasil_csv,
-                file_name="hasil_penilaian_lengkap.csv",
-                mime="text/csv"
-            )
+            
+            col_csv, col_pdf = st.columns(2)
+            with col_csv:
+                st.download_button(
+                    label="💾 Download Hasil Jadi (CSV)",
+                    data=hasil_csv,
+                    file_name="hasil_penilaian_lengkap.csv",
+                    mime="text/csv"
+                )
+            
+            with col_pdf:
+
+                if "pdf_data" not in st.session_state:
+                    st.session_state.pdf_data = None
+
+                if st.button("🔄 Siapkan File PDF"):
+                    try:
+                        st.session_state.pdf_data = generate_pdf(df) 
+                        st.success("✅ PDF Siap! Silakan download di bawah.")
+                    except Exception as e:
+                        st.error(f"Gagal membuat PDF: {e}")
+
+                if st.session_state.pdf_data is not None:
+                    st.download_button(
+                        label="⬇️ Download Laporan PDF",
+                        data=st.session_state.pdf_data, 
+                        file_name="Laporan_Nilai_Siswa.pdf",
+                        mime="application/pdf",
+                        key="btn_dowload_pdfS"
+                    )
         else:
-            st.error("❌ Kolom 'Nilai' tidak ditemukan! Pastikan pakai template yang benar.")
+            st.error("❌ Kolom 'Nilai' atau 'Nama Siswa' tidak ditemukan! Pastikan pakai template yang benar.")
             st.write(f"Kolom yang terbaca: {list(df.columns)}")
 
     except Exception as e:
