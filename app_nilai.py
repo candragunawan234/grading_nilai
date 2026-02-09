@@ -3,20 +3,20 @@ import pandas as pd
 from fpdf import FPDF
 import io
 
-# Judul Website
+#Judul Website
 st.set_page_config(page_title="Sistem Nilai SMK", page_icon="📊")
 
 st.title("📊 Sistem Penilaian Siswa Otomatis")
 st.write("Aplikasi khusus guru SMK Al Ittihad Mabdaul Ulum untuk grading cepat.")
 
-# --- LOGIKA GRADING ---
+#LOGIKA GRADING
 def hitung_grade(nilai):
     if nilai >= 90: return "A", "LULUS"
     elif nilai >= 80: return "B", "LULUS"
     elif nilai >= 75: return "C", "LULUS"
     else: return "D", "REMEDIAL"
 
-# --- FUNGSI GENERATE PDF ---
+#FUNGSI GENERATE PDF
 def generate_pdf(dataframe):
     pdf = FPDF()
     pdf.add_page()
@@ -51,7 +51,7 @@ def generate_pdf(dataframe):
         pdf.ln()
     return pdf.output()
 
-# --- SIDEBAR: DOWNLOAD TEMPLATE ---
+#SIDEBAR: DOWNLOAD TEMPLATE
 st.sidebar.header("Template Nilai Siswa")
 example_data = pd.DataFrame({
     "Nama Siswa": ["Budi", "Siti", "Joko"],
@@ -68,7 +68,7 @@ st.sidebar.download_button(
     mime="text/csv"
 )
 
-# --- MAIN: UPLOAD ---
+#MAIN: UPLOAD
 st.header("Upload Data")
 uploaded_file = st.file_uploader("Pilih file CSV hasil edit kamu", type=["csv"])
 
@@ -79,7 +79,7 @@ if uploaded_file is not None:
         
         # Cek apakah kolom Nilai ada 
         if "Nilai" in df.columns:
-            # --- PROSES DATA ---
+            #PROSES DATA
             df = df.drop_duplicates() # Hapus data ganda
             
             # Terapkan rumus grading ke setiap baris
@@ -87,20 +87,20 @@ if uploaded_file is not None:
                 lambda x: pd.Series(hitung_grade(x['Nilai'])), axis=1
             )
 
-            # --- TAMPILAN DASHBOARD (METRICS) ---
+            #TAMPILAN DASHBOARD (METRICS)
             st.header("📊 Ringkasan Nilai")
             col1, col2, col3 = st.columns(3)
             col1.metric("Total Siswa", len(df))
             col2.metric("Lulus", len(df[df['Status'] == 'LULUS']))
             col3.metric("Remedial", len(df[df['Status'] == 'REMEDIAL']))
 
-            # --- GRAFIK DISTRIBUSI GRADE ---
+            #GRAFIK DISTRIBUSI GRADE
             st.subheader("📈 Distribusi Grade")
             if not df.empty:
                 grade_counts = df['Grade'].value_counts().sort_index()
                 st.bar_chart(grade_counts, color="#3498db")
 
-            # --- TABEL HASIL DENGAN WARNA ---
+            #TABEL HASIL DENGAN WARNA
             st.header("📋 Daftar Hasil Grading")
             
             # Fungsi warna: Merah untuk Remedial, Hijau untuk Lulus
@@ -112,7 +112,7 @@ if uploaded_file is not None:
             styled_df = df.style.applymap(style_status, subset=['Status'])
             st.dataframe(styled_df, use_container_width=True)
             
-            # --- TOMBOL DOWNLOAD HASIL ---
+            #TOMBOL DOWNLOAD HASIL
             hasil_csv = df.to_csv(index=False, sep=';', encoding='utf-8-sig').encode('utf-8-sig')
             st.download_button(
                 label="💾 Download Hasil Jadi (CSV)",
