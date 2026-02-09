@@ -51,6 +51,10 @@ def generate_pdf(dataframe):
         pdf.ln()
     
     pdf_output = pdf.output()
+
+    if isinstance(pdf_output, bytearray):
+        return bytes(pdf_output)
+    
     if isinstance(pdf_output, str):
         pdf_output = pdf_output.encode('latin-1')
     return pdf_output
